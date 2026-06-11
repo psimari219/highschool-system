@@ -1,0 +1,192 @@
+import React, { useState } from 'react';
+import { Plus, Calendar, Save } from 'lucide-react';
+import Topbar from '../layout/Topbar';
+
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+const PERIODS = [
+  { period: 1, time: '07:30–08:30' },
+  { period: 2, time: '08:30–09:30' },
+  { period: 3, time: '09:30–10:30' },
+  { period: 4, time: '11:00–12:00' },
+  { period: 5, time: '12:00–13:00' },
+  { period: 6, time: '14:00–15:00' },
+];
+
+const PERIOD_COLORS = {
+  Mathematics: '#3b82f6', 'Further Mathematics': '#2563eb',
+  'English Language': '#06d6a0', 'English Literature': '#059669',
+  Physics: '#a78bfa', Chemistry: '#7c3aed', Biology: '#8b5cf6',
+  History: '#f59e0b', Geography: '#d97706',
+  'Computer Science': '#06b6d4', ICT: '#0891b2',
+  Science: '#10b981', Art: '#ec4899', Music: '#f43f5e',
+  'Physical Education': '#ef4444', 'Business Studies': '#f97316',
+  Break: '#374151', Lunch: '#374151',
+};
+
+function CellEditor({ value, store, cls, onSave, onClose }) {
+  const [form, setForm] = useState(value || { subject: '', teacherId: '', room: '' });
+  function set(f, v) { setForm(x => ({ ...x, [f]: v })); }
+  return (
+    <div className="modal-overlay">
+      <div className="modal" style={{ maxWidth: 380 }}>
+        <div className="modal-header">
+          <div className="modal-title">Edit Period</div>
+          <button className="btn btn-ghost btn-icon" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-body">
+          <div className="form-group">
+            <label className="form-label">Subject</label>
+            <select className="form-control" value={form.subject} onChange={e => set('subject', e.target.value)}>
+              <option value="">— Free Period —</option>
+              {(cls?.subjects || []).map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Teacher</label>
+            <select className="form-control" value={form.teacherId} onChange={e => set('teacherId', e.target.value)}>
+              <option value="">Select teacher</option>
+              {store.teachers.map(t => <option key={t.id} value={t.id}>{t.firstName} {t.lastName}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Room</label>
+            <input className="form-control" value={form.room} onChange={e => set('room', e.target.value)} placeholder="e.g. Room 201" />
+          </div>
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={() => onSave(form)}>Save</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function Timetables({ store, onUpdate }) {
+  const [classId, setClassId] = useState(store.classes[0]?.id || '');
+  const [editing, setEditing] = useState(null); // { day, period }
+
+  const cls = store.classes.find(c => c.id === classId);
+  const timetable = store.timetables?.[classId] || {};
+
+  function getCell(day, period) {
+    return timetable[day]?.find(p => p.period === period) || null;
+  }
+
+  function saveCell(day, period, data) {
+    const existing = timetable[day] || [];
+    const updated = existing.filter(p => p.period !== period);
+    if (data.subject) updated.push({ period, time: PERIODS.find(p => p.period === period)?.time || '', ...data });
+    const newTimetable = { ...store.timetables, [classId]: { ...timetable, [day]: updated } };
+    onUpdate({ ...store, timetables: newTimetable });
+    setEditing(null);
+  }
+
+  const editCell = editing ? getCell(editing.day, editing.period) : null;
+
+  return (
+    <div>
+      <Topbar
+        title="Timetables"
+        subtitle="Weekly class schedules"
+        school={store.school}
+      />
+      <div className="page-content animate-in">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+          <div>
+            <label className="form-label" style={{ marginBottom: 4 }}>Select Class</label>
+            <select className="form-control" style={{ width: 200 }} value={classId} onChange={e => setClassId(e.target.value)}>
+              {store.classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          {cls && (
+            <div style={{ marginTop: 16, display: 'flex', gap: 10 }}>
+              <span className="badge badge-primary">Grade {cls.grade}{cls.stream}</span>
+              <span className="badge badge-info">{cls.room}</span>
+              <span className="badge badge-purple">{cls.subjects.length} subjects</span>
+            </div>
+          )}
+        </div>
+
+        {/* Legend */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+          {(cls?.subjects || []).map(s => (
+            <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11 }}>
+              <span style={{ width: 10, height: 10, borderRadius: 3, background: PERIOD_COLORS[s] || '#64748b', display: 'inline-block' }} />
+              <span style={{ color: 'var(--text2)' }}>{s}</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ overflowX: 'auto', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+            <thead>
+              <tr>
+                <th style={{ background: 'var(--bg3)', padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text3)', letterSpacing: 1, textTransform: 'uppercase', width: 100, borderBottom: '1px solid var(--border)' }}>Period</th>
+                {DAYS.map(day => (
+                  <th key={day} style={{ background: 'var(--bg3)', padding: '12px 16px', textAlign: 'center', fontSize: 12, fontWeight: 700, color: 'var(--text2)', borderBottom: '1px solid var(--border)', borderLeft: '1px solid var(--border)' }}>{day}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {PERIODS.map(p => (
+                <tr key={p.period}>
+                  <td style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', background: 'var(--bg3)' }}>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--primary)' }}>P{p.period}</div>
+                    <div style={{ fontSize: 10, color: 'var(--text3)' }}>{p.time}</div>
+                  </td>
+                  {DAYS.map(day => {
+                    const cell = getCell(day, p.period);
+                    const color = cell?.subject ? (PERIOD_COLORS[cell.subject] || '#64748b') : null;
+                    const teacher = cell?.teacherId ? store.teachers.find(t => t.id === cell.teacherId) : null;
+                    return (
+                      <td key={day} style={{ borderLeft: '1px solid var(--border)', borderBottom: '1px solid var(--border)', padding: 6, verticalAlign: 'top', minWidth: 140 }}>
+                        <div
+                          onClick={() => setEditing({ day, period: p.period })}
+                          style={{
+                            minHeight: 64, borderRadius: 8, padding: '8px 10px', cursor: 'pointer',
+                            background: color ? `${color}18` : 'transparent',
+                            border: `1px solid ${color ? `${color}35` : 'var(--border)'}`,
+                            transition: 'all 0.15s',
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.opacity = '0.75'; }}
+                          onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+                        >
+                          {cell?.subject ? (
+                            <>
+                              <div style={{ fontWeight: 700, fontSize: 12, color, marginBottom: 3 }}>{cell.subject}</div>
+                              {teacher && <div style={{ fontSize: 10, color: 'var(--text3)' }}>{teacher.firstName[0]}. {teacher.lastName}</div>}
+                              {cell.room && <div style={{ fontSize: 10, color: 'var(--text3)' }}>{cell.room}</div>}
+                            </>
+                          ) : (
+                            <div style={{ color: 'var(--text3)', fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: 48 }}>
+                              + Add
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{ marginTop: 12, fontSize: 12, color: 'var(--text3)', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Calendar size={13} /> Click any cell to assign a subject, teacher, and room.
+        </div>
+      </div>
+
+      {editing && (
+        <CellEditor
+          value={editCell}
+          store={store}
+          cls={cls}
+          onSave={(data) => saveCell(editing.day, editing.period, data)}
+          onClose={() => setEditing(null)}
+        />
+      )}
+    </div>
+  );
+}
