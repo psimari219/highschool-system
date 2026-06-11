@@ -20,6 +20,7 @@
     "serve": "npx serve -s build",
     "clean-build": "rm -rf build && react-scripts build"
   },
+  "_comment": "GitHub Pages deployment: ensure repository settings use gh-pages branch as source",
   "browserslist": {
     "production": [
       ">0.2%",
