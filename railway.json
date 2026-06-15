@@ -1,0 +1,26 @@
+{
+  "projects": [
+    {
+      "name": "highschool-system-backend",
+      "services": [
+        {
+          "name": "server",
+          "path": "server",
+          "startCommand": "npm start",
+          "env": ["PORT","DB_HOST","DB_PORT","DB_NAME","DB_USER","DB_PASSWORD","JWT_SECRET"]
+        }
+      ]
+    },
+    {
+      "name": "highschool-system-frontend",
+      "services": [
+        {
+          "name": "client",
+          "path": ".",
+          "startCommand": "npm run build && npx serve -s build -l $PORT",
+          "env": ["REACT_APP_API_URL"]
+        }
+      ]
+    }
+  ]
+}
