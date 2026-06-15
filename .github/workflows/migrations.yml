@@ -1,0 +1,29 @@
+name: Run DB migrations and seed
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install server dependencies
+        run: npm ci
+        working-directory: server
+      - name: Run DB init and seed (uses DATABASE_URL secret)
+        if: ${{ secrets.DATABASE_URL != '' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Running DB init and seed"
+          cd server
+          npm run db:init
+          npm run db:seed
