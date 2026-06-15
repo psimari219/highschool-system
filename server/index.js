@@ -35,10 +35,11 @@ app.use('/api/grades', require('./routes/grades'));
 app.use('/api/attendance', require('./routes/attendance'));
 app.use('/api/sports', require('./routes/sports'));
 app.use('/api/schemes', require('./routes/schemes'));
-app.use('/api/enrollment', require('./routes/enrollment'));
-app.use('/api/dashboard', require('./routes/dashboard'));
-app.use('/api/timetable', require('./routes/timetable'));
-app.use('/api/fees', require('./routes/fees'));
+// TODO: Add enrollment, dashboard, timetable, and fees routes
+// app.use('/api/enrollment', require('./routes/enrollment'));
+// app.use('/api/dashboard', require('./routes/dashboard'));
+// app.use('/api/timetable', require('./routes/timetable'));
+// app.use('/api/fees', require('./routes/fees'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`School Server running on port ${PORT} with PostgreSQL`));
