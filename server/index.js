@@ -1,11 +1,30 @@
 const express = require('express');
 const cors = require('cors');
+require('dotenv').config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const db = require('./db');
+// PostgreSQL connection
+const pool = require('./config/postgres');
+
+// Initialize database schema on startup
+const initializeDatabase = require('./db-init');
+initializeDatabase().catch(err => console.error('Database initialization failed:', err));
+
+// Health check
+app.get('/api/health', (req, res) => res.json({ status: 'OK', timestamp: new Date(), database: 'PostgreSQL' }));
+
+// Database connection test endpoint
+app.get('/api/db-status', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW()');
+    res.json({ status: 'connected', timestamp: result.rows[0].now });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error.message });
+  }
+});
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/students', require('./routes/students'));
@@ -21,7 +40,5 @@ app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/timetable', require('./routes/timetable'));
 app.use('/api/fees', require('./routes/fees'));
 
-app.get('/api/health', (req, res) => res.json({ status: 'OK', timestamp: new Date() }));
-
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`School Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`School Server running on port ${PORT} with PostgreSQL`));

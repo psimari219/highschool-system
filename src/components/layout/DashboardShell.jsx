@@ -21,7 +21,7 @@ export default function DashboardShell({ navSections, children, accentColor = 'v
   return (
     <div className="app-layout">
       {/* Sidebar */}
-      <nav className="sidebar" style={{ background: 'var(--bg2)', transform: mobileOpen ? 'none' : undefined }}>
+      <nav className={`sidebar ${mobileOpen ? 'mobile-open' : ''}`} style={{ background: 'var(--bg2)' }}>
         {/* Brand */}
         <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid var(--border)' }}>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800, background: `linear-gradient(135deg, ${roleColor}, #06d6a0)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
@@ -44,26 +44,28 @@ export default function DashboardShell({ navSections, children, accentColor = 'v
         </div>
 
         {/* Nav sections */}
-        {navSections.map(section => (
-          <div key={section.label} style={{ padding: '12px 10px 4px' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--text3)', padding: '0 8px', marginBottom: 4 }}>{section.label}</div>
-            {section.items.map(item => {
-              const Icon = item.icon;
-              const active = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
-              return (
-                <button key={item.path}
-                  className={`nav-item ${active ? 'active' : ''}`}
-                  style={active ? { background: `${roleColor}18`, color: roleColor, borderColor: `${roleColor}30` } : {}}
-                  onClick={() => { navigate(item.path); setMobileOpen(false); }}>
-                  <Icon size={15} className="nav-icon" />
-                  {item.label}
-                  {item.badge ? <span className="nav-badge" style={{ background: roleColor }}>{item.badge}</span> : null}
-                  {active && <ChevronRight size={12} style={{ marginLeft: 'auto', opacity: 0.5 }} />}
-                </button>
-              );
-            })}
-          </div>
-        ))}
+        <div className="sidebar-body">
+          {navSections.map(section => (
+            <div key={section.label} style={{ padding: '12px 10px 4px' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--text3)', padding: '0 8px', marginBottom: 4 }}>{section.label}</div>
+              {section.items.map(item => {
+                const Icon = item.icon;
+                const active = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+                return (
+                  <button key={item.path}
+                    className={`nav-item ${active ? 'active' : ''}`}
+                    style={active ? { background: `${roleColor}18`, color: roleColor, borderColor: `${roleColor}30` } : {}}
+                    onClick={() => { navigate(item.path); setMobileOpen(false); }}>
+                    <Icon size={15} className="nav-icon" />
+                    {item.label}
+                    {item.badge ? <span className="nav-badge" style={{ background: roleColor }}>{item.badge}</span> : null}
+                    {active && <ChevronRight size={12} style={{ marginLeft: 'auto', opacity: 0.5 }} />}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </div>
 
         {/* Bottom actions */}
         <div style={{ marginTop: 'auto', padding: 12, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -76,12 +78,15 @@ export default function DashboardShell({ navSections, children, accentColor = 'v
         </div>
       </nav>
 
+      {/* Mobile backdrop */}
+      {mobileOpen && <div className="mobile-backdrop" onClick={() => setMobileOpen(false)} />}
+
       {/* Main */}
       <main className="main-content">
         {/* Top bar */}
         <div className="topbar">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button className="btn btn-ghost btn-icon" style={{ display: 'none' }} onClick={() => setMobileOpen(!mobileOpen)}>
+            <button className="btn btn-ghost btn-icon mobile-menu-toggle" onClick={() => setMobileOpen(!mobileOpen)}>
               {mobileOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
             <div>
