@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
+const path = require('path');
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -35,11 +36,16 @@ app.use('/api/grades', require('./routes/grades'));
 app.use('/api/attendance', require('./routes/attendance'));
 app.use('/api/sports', require('./routes/sports'));
 app.use('/api/schemes', require('./routes/schemes'));
-// TODO: Add enrollment, dashboard, timetable, and fees routes
-// app.use('/api/enrollment', require('./routes/enrollment'));
-// app.use('/api/dashboard', require('./routes/dashboard'));
-// app.use('/api/timetable', require('./routes/timetable'));
-// app.use('/api/fees', require('./routes/fees'));
+app.use('/api/events', require('./routes/events'));
+app.use('/api/announcements', require('./routes/announcements'));
+app.use('/api/dashboard', require('./routes/dashboard'));
+
+// Serve client build in production when available
+if (process.env.NODE_ENV === 'production') {
+  const buildPath = path.join(__dirname, '..', 'build');
+  app.use(express.static(buildPath));
+  app.get('*', (req, res) => res.sendFile(path.join(buildPath, 'index.html')));
+}
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`School Server running on port ${PORT} with PostgreSQL`));

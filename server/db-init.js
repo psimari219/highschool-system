@@ -107,6 +107,21 @@ CREATE TABLE IF NOT EXISTS classes (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Timetable
+CREATE TABLE IF NOT EXISTS timetable (
+  id VARCHAR(50) PRIMARY KEY,
+  class_id VARCHAR(50) REFERENCES classes(id),
+  subject_id VARCHAR(50) REFERENCES subjects(id),
+  teacher_id VARCHAR(50) REFERENCES teachers(id),
+  day VARCHAR(20),
+  period INT,
+  start_time VARCHAR(10),
+  end_time VARCHAR(10),
+  room VARCHAR(50),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Enrollment
 CREATE TABLE IF NOT EXISTS enrollment (
   id VARCHAR(50) PRIMARY KEY,
@@ -127,6 +142,7 @@ CREATE TABLE IF NOT EXISTS grades (
   subject_id VARCHAR(50) REFERENCES subjects(id),
   class_id VARCHAR(50) REFERENCES classes(id),
   score DECIMAL(5, 2),
+  gpa_points NUMERIC(3,2),
   grade VARCHAR(5),
   term VARCHAR(20),
   year INT,
@@ -217,6 +233,32 @@ CREATE TABLE IF NOT EXISTS schemes (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Events
+CREATE TABLE IF NOT EXISTS events (
+  id VARCHAR(50) PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  type VARCHAR(100),
+  status VARCHAR(50) DEFAULT 'Upcoming',
+  date DATE,
+  time VARCHAR(50),
+  venue VARCHAR(255),
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Announcements
+CREATE TABLE IF NOT EXISTS announcements (
+  id VARCHAR(50) PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  content TEXT NOT NULL,
+  priority VARCHAR(50) DEFAULT 'Normal',
+  author VARCHAR(200),
+  date DATE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Messages
 CREATE TABLE IF NOT EXISTS messages (
   id VARCHAR(50) PRIMARY KEY,
@@ -237,6 +279,8 @@ CREATE INDEX IF NOT EXISTS idx_grades_student_id ON grades(student_id);
 CREATE INDEX IF NOT EXISTS idx_attendance_student_id ON attendance(student_id);
 CREATE INDEX IF NOT EXISTS idx_fee_payments_student_id ON fee_payments(student_id);
 CREATE INDEX IF NOT EXISTS idx_messages_recipient_id ON messages(recipient_id);
+-- Ensure GPA points column exists for older databases
+ALTER TABLE grades ADD COLUMN IF NOT EXISTS gpa_points NUMERIC(3,2);
 `;
 
 async function initializeDatabase() {

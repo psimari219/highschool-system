@@ -107,6 +107,17 @@ async function seedDatabase() {
       `, [cls.id, cls.name, cls.grade, cls.stream, cls.year, cls.capacity, cls.teacherId]);
     }
 
+    // Seed the school timetable for a few periods
+    await client.query(`
+      INSERT INTO timetable (id, class_id, subject_id, teacher_id, day, period, start_time, end_time, room, created_at, updated_at)
+      VALUES
+        ('tt1', 'c1', 's1', 'T001', 'Monday', 1, '07:00', '07:45', 'Room 101', NOW(), NOW()),
+        ('tt2', 'c1', 's2', 'T002', 'Monday', 2, '07:45', '08:30', 'Room 101', NOW(), NOW()),
+        ('tt3', 'c2', 's3', 'T003', 'Monday', 1, '07:00', '07:45', 'Room 102', NOW(), NOW()),
+        ('tt4', 'c2', 's4', 'T004', 'Monday', 2, '07:45', '08:30', 'Room 102', NOW(), NOW())
+      ON CONFLICT (id) DO NOTHING
+    `);
+
     // Seed students
     const studentIds = ['S001', 'S002', 'S003', 'S004', 'S005', 'S006', 'S007', 'S008'];
     const studentNames = [
@@ -127,6 +138,32 @@ async function seedDatabase() {
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8)
         ON CONFLICT (id) DO NOTHING
       `, [studentIds[i], studentIds[i], studentNames[i].first, studentNames[i].last, '2007-05-15', 'M', classId, '2024-01-15']);
+    }
+
+    // Seed events
+    const events = [
+      { id: 'EV001', title: 'Open Day', type: 'School Event', status: 'Upcoming', date: '2024-10-05', time: '09:00', venue: 'Main Hall', description: 'Open day for prospective students and parents.' },
+      { id: 'EV002', title: 'Science Fair', type: 'Academic', status: 'Upcoming', date: '2024-11-12', time: '10:00', venue: 'Science Block', description: 'Student science projects on display.' },
+    ];
+    for (const event of events) {
+      await client.query(`
+        INSERT INTO events (id, title, type, status, date, time, venue, description)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        ON CONFLICT (id) DO NOTHING
+      `, [event.id, event.title, event.type, event.status, event.date, event.time, event.venue, event.description]);
+    }
+
+    // Seed announcements
+    const announcements = [
+      { id: 'ANN001', title: 'Term Exams Schedule', content: 'Term exams start next month. Please review your timetable and prepare accordingly.', priority: 'High', author: 'Administration', date: '2024-09-01' },
+      { id: 'ANN002', title: 'Library Closed', content: 'The library will be closed this Friday for maintenance.', priority: 'Normal', author: 'Library', date: '2024-09-08' },
+    ];
+    for (const announcement of announcements) {
+      await client.query(`
+        INSERT INTO announcements (id, title, content, priority, author, date)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (id) DO NOTHING
+      `, [announcement.id, announcement.title, announcement.content, announcement.priority, announcement.author, announcement.date]);
     }
 
     // Seed fee structure
