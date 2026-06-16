@@ -39,8 +39,55 @@ Opens at **http://localhost:3000**
 - **React 18** with React Router v6
 - **Recharts** for dashboard charts
 - **Lucide React** for icons
-- **localStorage** for data persistence (no backend required)
+- **Express** backend with PostgreSQL
+- **Docker-ready** for production
 - **Custom CSS** — dark theme, Syne + DM Sans fonts
+
+---
+
+## 🚀 Production Deployment
+
+This repo now includes a backend and PostgreSQL deployment configuration.
+
+### Required environment variables
+
+- `DATABASE_URL` — Postgres connection string
+- `JWT_SECRET` — auth token secret
+- `REACT_APP_API_URL` — production API base URL used by the frontend
+
+### Deployment options
+
+1) **Docker**
+
+```bash
+docker build -t highschool-system:latest .
+docker run -e DATABASE_URL="$DATABASE_URL" -e JWT_SECRET="$JWT_SECRET" -p 5000:5000 highschool-system:latest
+```
+
+2) **Heroku / Render / Any Node host**
+
+- Use the repo root `Procfile`:
+
+```text
+web: node server/index.js
+```
+
+- Set `DATABASE_URL` and `JWT_SECRET` in the host environment.
+
+3) **Vercel**
+
+- Connect the repo to Vercel.
+- Add `DATABASE_URL`, `JWT_SECRET`, and `REACT_APP_API_URL` to Vercel environment variables.
+- `vercel.json` is configured for the Node backend.
+
+### GitHub Actions
+
+The workflow `.github/workflows/deploy.yml` now:
+
+- installs server and client dependencies
+- runs `server/db-init.js` and `server/seed.js` using `DATABASE_URL`
+- builds the React client
+- optionally deploys to Vercel when Vercel secrets are provided
 
 ---
 
