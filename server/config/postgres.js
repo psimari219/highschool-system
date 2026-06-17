@@ -2,16 +2,18 @@ require('dotenv').config();
 const { Pool } = require('pg');
 
 // Prefer discrete DB env vars when explicitly configured.
-// Otherwise use a single DATABASE_URL (e.g. Supabase).
+// Otherwise parse a single DATABASE_URL (e.g. Supabase).
 const dbHost = process.env.DB_HOST?.trim();
 const dbPort = process.env.DB_PORT?.trim();
 const dbName = process.env.DB_NAME?.trim();
 const dbUser = process.env.DB_USER?.trim();
 const dbPassword = process.env.DB_PASSWORD?.trim();
+const dbFamily = Number.isInteger(Number(process.env.DB_FAMILY)) ? Number(process.env.DB_FAMILY) : null;
 const connectionString = process.env.DATABASE_URL?.trim() || null;
-const hasExplicitDbEnv = dbHost && dbUser && dbPassword && dbName;
+const hasExplicitDbEnv = Boolean(dbHost && dbUser && dbPassword && dbName);
 
 let poolConfig;
+
 if (hasExplicitDbEnv) {
   poolConfig = {
     host: dbHost,
@@ -19,18 +21,30 @@ if (hasExplicitDbEnv) {
     database: dbName,
     user: dbUser,
     password: dbPassword,
-    ssl: {
-      rejectUnauthorized: false,
-    },
+    ssl: { rejectUnauthorized: false },
   };
 } else if (connectionString) {
-  // For hosted Postgres providers (Supabase) SSL is required.
-  poolConfig = {
-    connectionString,
-    ssl: {
-      rejectUnauthorized: false,
-    },
-  };
+  // Parse CONNECTION_URL to extract components and avoid IPv6-only hostname issues
+  try {
+    const url = new URL(connectionString);
+    poolConfig = {
+      host: url.hostname,
+      port: Number(url.port) || 5432,
+      database: url.pathname.slice(1),
+      user: url.username,
+      password: url.password,
+      ssl: { rejectUnauthorized: false },
+    };
+    // Force IPv4 for Supabase on Vercel
+    poolConfig.family = 4;
+    console.log('✓ Parsed DATABASE_URL into explicit connection parameters with family=4');
+  } catch (err) {
+    console.error('Failed to parse DATABASE_URL:', err.message);
+    poolConfig = {
+      connectionString,
+      ssl: { rejectUnauthorized: false },
+    };
+  }
 } else {
   poolConfig = {
     host: dbHost || 'localhost',
@@ -39,6 +53,11 @@ if (hasExplicitDbEnv) {
     user: dbUser || 'postgres',
     password: dbPassword || '',
   };
+}
+
+// Apply DB_FAMILY override if set
+if ((dbFamily === 4 || dbFamily === 6) && !connectionString) {
+  poolConfig.family = dbFamily;
 }
 
 const pool = new Pool(poolConfig);
@@ -64,6 +83,7 @@ function getDebugInfo() {
     port: poolConfig.port || null,
     database: poolConfig.database || null,
     user: poolConfig.user || null,
+    family: poolConfig.family || null,
     hasConnectionString: Boolean(connectionString),
     connectionString: connectionString ? maskConnectionString(connectionString) : null,
   };
