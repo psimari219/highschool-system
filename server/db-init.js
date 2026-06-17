@@ -299,7 +299,10 @@ async function initializeDatabase() {
     console.log('✓ Database schema initialized successfully');
   } catch (error) {
     console.error('✗ Error initializing database:', error.message);
-    process.exit(1);
+    // Only exit when the script is run directly; don't terminate the hosting process when required as a module
+    if (require.main === module) {
+      process.exit(1);
+    }
   }
 }
 
