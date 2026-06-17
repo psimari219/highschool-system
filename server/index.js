@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.json());
 
 // PostgreSQL connection
-const pool = require('./config/postgres');
+const { pool, getDebugInfo } = require('./config/postgres');
 
 // Initialize database schema on startup (Vercel: do this asynchronously, don't block)
 const initializeDatabase = require('./db-init');
@@ -34,6 +34,20 @@ app.get('/api/db-status', async (req, res) => {
   } catch (error) {
     res.status(500).json({ status: 'error', message: error.message });
   }
+});
+
+app.get('/api/db-env', (req, res) => {
+  const info = getDebugInfo();
+  res.json({
+    nodeEnv: process.env.NODE_ENV || null,
+    dbMode: info.mode,
+    dbHost: info.host,
+    dbPort: info.port,
+    dbName: info.database,
+    dbUser: info.user,
+    hasDatabaseUrl: info.hasConnectionString,
+    databaseUrl: info.connectionString,
+  });
 });
 
 app.use('/api/auth', require('./routes/auth'));

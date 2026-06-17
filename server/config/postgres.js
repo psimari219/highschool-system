@@ -46,4 +46,25 @@ pool.on('connect', () => {
   console.log('✓ Connected to PostgreSQL');
 });
 
-module.exports = pool;
+function maskConnectionString(conn) {
+  return conn.replace(/(postgres(?:ql)?:\/\/[^:]+:)([^@]+)(@.*)/, '$1***$3');
+}
+
+function getDebugInfo() {
+  const explicit = hasExplicitDbEnv;
+  const mode = explicit ? 'explicit' : connectionString ? 'connectionString' : 'defaults';
+  return {
+    mode,
+    host: poolConfig.host || null,
+    port: poolConfig.port || null,
+    database: poolConfig.database || null,
+    user: poolConfig.user || null,
+    hasConnectionString: Boolean(connectionString),
+    connectionString: connectionString ? maskConnectionString(connectionString) : null,
+  };
+}
+
+module.exports = {
+  pool,
+  getDebugInfo,
+};
