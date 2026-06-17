@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dns = require('dns').promises;
+const DNS = require('dns');
 require('dotenv').config();
 
 const path = require('path');
@@ -8,6 +9,9 @@ const fs = require('fs');
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+const publicResolver = new DNS.Resolver();
+publicResolver.setServers(['1.1.1.1', '8.8.8.8']);
 
 // PostgreSQL connection
 const { pool, getDebugInfo } = require('./config/postgres');
@@ -38,12 +42,63 @@ app.get('/api/db-status', async (req, res) => {
     res.json({ status: 'connected', timestamp: result.rows[0].now, host: info.host });
   } catch (error) {
     res.status(500).json({
-      status: 'error', message: error.message,
+      status: 'error',
+      message: error.message,
       code: error.code || null,
       host: info.host,
       dbMode: info.mode,
     });
   }
+});
+
+app.get('/api/db-dns', async (req, res) => {
+  const info = getDebugInfo();
+  const host = info.host;
+  if (!host) {
+    return res.status(400).json({ error: 'No DB host configured' });
+  }
+
+  const result = {
+    host,
+    osLookup: null,
+    resolve4: null,
+    resolve6: null,
+    publicResolve4: null,
+    publicResolve6: null,
+    dnsServers: DNS.getServers(),
+  };
+
+  try {
+    result.osLookup = await dns.lookup(host);
+  } catch (err) {
+    result.osLookup = { error: err.message, code: err.code || null };
+  }
+
+  try {
+    result.resolve4 = await dns.resolve4(host);
+  } catch (err) {
+    result.resolve4 = { error: err.message, code: err.code || null };
+  }
+
+  try {
+    result.resolve6 = await dns.resolve6(host);
+  } catch (err) {
+    result.resolve6 = { error: err.message, code: err.code || null };
+  }
+
+  try {
+    result.publicResolve4 = await publicResolver.resolve4(host);
+  } catch (err) {
+    result.publicResolve4 = { error: err.message, code: err.code || null };
+  }
+
+  try {
+    result.publicResolve6 = await publicResolver.resolve6(host);
+  } catch (err) {
+    result.publicResolve6 = { error: err.message, code: err.code || null };
+  }
+
+  res.json(result);
 });
 
 app.get('/api/db-env', (req, res) => {
@@ -57,6 +112,7 @@ app.get('/api/db-env', (req, res) => {
     dbUser: info.user,
     hasDatabaseUrl: info.hasConnectionString,
     databaseUrl: info.connectionString,
+    dnsServers: DNS.getServers(),
   });
 });
 
