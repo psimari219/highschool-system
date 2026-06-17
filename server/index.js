@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const path = require('path');
+const fs = require('fs');
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -10,9 +11,17 @@ app.use(express.json());
 // PostgreSQL connection
 const pool = require('./config/postgres');
 
-// Initialize database schema on startup
+// Initialize database schema on startup (Vercel: do this asynchronously, don't block)
 const initializeDatabase = require('./db-init');
-initializeDatabase().catch(err => console.error('Database initialization failed:', err));
+if (process.env.NODE_ENV === 'production' && process.env.DATABASE_URL) {
+  // On Vercel, initialize DB in the background without blocking startup
+  setImmediate(() => {
+    initializeDatabase().catch(err => console.error('Database initialization failed:', err));
+  });
+} else if (process.env.NODE_ENV !== 'production') {
+  // In local dev, wait for init
+  initializeDatabase().catch(err => console.error('Database initialization failed:', err));
+}
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'OK', timestamp: new Date(), database: 'PostgreSQL' }));
@@ -40,12 +49,24 @@ app.use('/api/events', require('./routes/events'));
 app.use('/api/announcements', require('./routes/announcements'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 
-// Serve client build in production when available
-if (process.env.NODE_ENV === 'production') {
+// Serve client build in production when available (local deployment only)
+if (process.env.NODE_ENV === 'production' && require.main === module) {
   const buildPath = path.join(__dirname, '..', 'build');
   app.use(express.static(buildPath));
-  app.get('*', (req, res) => res.sendFile(path.join(buildPath, 'index.html')));
+  app.get('*', (req, res) => {
+    const indexPath = path.join(buildPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).json({ error: 'Frontend not available' });
+    }
+  });
 }
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`School Server running on port ${PORT} with PostgreSQL`));
+
+if (require.main === module) {
+  app.listen(PORT, () => console.log(`School Server running on port ${PORT} with PostgreSQL`));
+}
+
+module.exports = app;

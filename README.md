@@ -78,7 +78,16 @@ web: node server/index.js
 
 - Connect the repo to Vercel.
 - Add `DATABASE_URL`, `JWT_SECRET`, and `REACT_APP_API_URL` to Vercel environment variables.
-- `vercel.json` is configured for the Node backend.
+- `vercel.json` is configured for the Node backend and frontend static build.
+- The `vercel-build` script builds the React app before deployment.
+
+### Deployment checklist
+
+- [ ] Configure `DATABASE_URL` and `JWT_SECRET` in the chosen host
+- [ ] Set `REACT_APP_API_URL` to the backend base URL for frontend production
+- [ ] Push `main` to trigger GitHub Actions or Vercel deploy
+- [ ] Verify `/api/health` and `/api/db-status` on the hosted backend
+- [ ] Verify frontend requests succeed and pages render correctly
 
 ### GitHub Actions
 
@@ -86,8 +95,10 @@ The workflow `.github/workflows/deploy.yml` now:
 
 - installs server and client dependencies
 - runs `server/db-init.js` and `server/seed.js` using `DATABASE_URL`
-- builds the React client
+- builds the React client with `REACT_APP_API_URL` from GitHub Secrets
 - optionally deploys to Vercel when Vercel secrets are provided
+
+> If you deploy the frontend separately (for example to GitHub Pages), set `REACT_APP_API_URL` to your hosted backend URL before building so the frontend can call the correct API endpoint.
 
 ---
 

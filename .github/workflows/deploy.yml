@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NODE_ENV: production
+      REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,7 +26,7 @@ jobs:
         run: cd server && npm ci
 
       - name: Run DB migrations (if DATABASE_URL provided)
-        if: env.DATABASE_URL != ''
+        if: ${{ secrets.DATABASE_URL != '' }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
@@ -34,11 +35,13 @@ jobs:
           node server/db-init.js
           node server/seed.js
 
-      - name: Install client deps
-        run: cd client && npm ci
+      - name: Install frontend deps
+        run: npm ci
 
-      - name: Build client
-        run: cd client && npm run build
+      - name: Build frontend
+        env:
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+        run: npm run build
 
       - name: Deploy to Vercel (optional)
         if: ${{ secrets.VERCEL_TOKEN != '' }}

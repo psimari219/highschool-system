@@ -10,6 +10,8 @@ jobs:
     permissions:
       contents: write
       pages: write
+    env:
+      REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js

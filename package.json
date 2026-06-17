@@ -17,6 +17,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "vercel-build": "npm install --prefix server && react-scripts build",
     "serve": "npx serve -s build",
     "clean-build": "rm -rf build && react-scripts build"
   },

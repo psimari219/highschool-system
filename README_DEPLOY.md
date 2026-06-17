@@ -24,9 +24,9 @@ docker run -e DATABASE_URL="$DATABASE_URL" -e JWT_SECRET="$JWT_SECRET" -p 5000:5
 ```
 
 2) Vercel (frontend) + managed backend (Render/Supabase)
-- Connect this repo to Vercel for the frontend; set `REACT_APP_API_URL` to your backend URL.
-- For backend, deploy `server` to Render/Heroku as a Node service. Add `DATABASE_URL` and `JWT_SECRET` secrets.
-- CI workflow `.github/workflows/deploy.yml` will run DB migrations and seed when `DATABASE_URL` is set in repository secrets.
+- Connect this repo to Vercel for the frontend + API. Add `DATABASE_URL`, `JWT_SECRET`, and `REACT_APP_API_URL` to Vercel environment variables.
+- `vercel.json` is already configured to route `/api/*` to `server/index.js` and the frontend to the static React build.
+- Set `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` in GitHub Secrets if you want the CI workflow to trigger Vercel deploy automatically.
 
 3) Heroku / Render
 - Create app, set `Procfile` in repo root (`web: node server/index.js`).
