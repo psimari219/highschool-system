@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const dns = require('dns').promises;
 require('dotenv').config();
 
 const path = require('path');
@@ -28,11 +29,20 @@ app.get('/api/health', (req, res) => res.json({ status: 'OK', timestamp: new Dat
 
 // Database connection test endpoint
 app.get('/api/db-status', async (req, res) => {
+  const info = getDebugInfo();
   try {
+    if (info.host) {
+      await dns.lookup(info.host);
+    }
     const result = await pool.query('SELECT NOW()');
-    res.json({ status: 'connected', timestamp: result.rows[0].now });
+    res.json({ status: 'connected', timestamp: result.rows[0].now, host: info.host });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: error.message });
+    res.status(500).json({
+      status: 'error', message: error.message,
+      code: error.code || null,
+      host: info.host,
+      dbMode: info.mode,
+    });
   }
 });
 

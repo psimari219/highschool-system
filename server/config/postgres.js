@@ -3,17 +3,22 @@ const { Pool } = require('pg');
 
 // Prefer discrete DB env vars when explicitly configured.
 // Otherwise use a single DATABASE_URL (e.g. Supabase).
-const hasExplicitDbEnv = process.env.DB_HOST && process.env.DB_USER && process.env.DB_PASSWORD && process.env.DB_NAME;
-const connectionString = process.env.DATABASE_URL || null;
+const dbHost = process.env.DB_HOST?.trim();
+const dbPort = process.env.DB_PORT?.trim();
+const dbName = process.env.DB_NAME?.trim();
+const dbUser = process.env.DB_USER?.trim();
+const dbPassword = process.env.DB_PASSWORD?.trim();
+const connectionString = process.env.DATABASE_URL?.trim() || null;
+const hasExplicitDbEnv = dbHost && dbUser && dbPassword && dbName;
 
 let poolConfig;
 if (hasExplicitDbEnv) {
   poolConfig = {
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT || 5432,
-    database: process.env.DB_NAME,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
+    host: dbHost,
+    port: dbPort || 5432,
+    database: dbName,
+    user: dbUser,
+    password: dbPassword,
     ssl: {
       rejectUnauthorized: false,
     },
@@ -28,11 +33,11 @@ if (hasExplicitDbEnv) {
   };
 } else {
   poolConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
-    database: process.env.DB_NAME || 'highschool_system',
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || '',
+    host: dbHost || 'localhost',
+    port: dbPort || 5432,
+    database: dbName || 'highschool_system',
+    user: dbUser || 'postgres',
+    password: dbPassword || '',
   };
 }
 
