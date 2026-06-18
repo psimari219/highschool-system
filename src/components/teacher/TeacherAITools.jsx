@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import styles from '../layout/main.module.css';
-import '../dashboard/dashboard.css';
 
 const TeacherAITools = () => {
   const [activeTab, setActiveTab] = useState('notes');
