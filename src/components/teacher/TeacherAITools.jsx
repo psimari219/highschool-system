@@ -71,6 +71,34 @@ const TeacherAITools = () => {
     }
   };
 
+  const styles = {
+    container: { padding: 24, maxWidth: 1024, margin: '0 auto', color: 'var(--text, #111)' },
+    header: { marginBottom: 20 },
+    message: { padding: 14, borderRadius: 12, marginBottom: 20, fontWeight: 600 },
+    success: { background: '#e6ffed', border: '1px solid #21a84f', color: '#0f5132' },
+    error: { background: '#ffe6e6', border: '1px solid #d43f3f', color: '#6f1d1d' },
+    tabs: { display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 24 },
+    tabBtn: { padding: '10px 14px', borderRadius: 10, border: '1px solid #ccc', background: 'white', cursor: 'pointer', fontWeight: 600 },
+    active: { background: 'var(--primary, #2563eb)', color: 'white', borderColor: 'transparent' },
+    tabContent: { background: 'white', border: '1px solid #e5e7eb', borderRadius: 16, padding: 20, boxShadow: '0 8px 24px rgba(15, 23, 42, 0.05)' },
+    form: { display: 'grid', gap: 16, marginBottom: 20 },
+    formGroup: { display: 'flex', flexDirection: 'column', gap: 8 },
+    btn: { padding: '12px 18px', borderRadius: 10, border: 'none', background: 'var(--primary, #2563eb)', color: 'white', cursor: 'pointer', fontWeight: 700 },
+    btnSmall: { padding: '8px 12px', borderRadius: 10, border: '1px solid #ccc', background: 'white', cursor: 'pointer' },
+    list: { display: 'grid', gap: 12 },
+    listItem: { padding: 16, borderRadius: 14, border: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, background: '#fafafa' },
+    reviewCard: { padding: 20, borderRadius: 14, border: '1px solid #e5e7eb', background: '#fff', display: 'grid', gap: 16 },
+    feedback: { padding: 16, borderRadius: 12, background: '#f8fafc', border: '1px solid #d1d5db' },
+    secondary: { background: '#f3f4f6', color: '#111', border: '1px solid #d1d5db' },
+  };
+
+  const messageStyle = message
+    ? { ...styles.message, ...(message.includes('✓') ? styles.success : styles.error) }
+    : undefined;
+
+  const getTabBtnStyle = (tab) =>
+    activeTab === tab ? { ...styles.tabBtn, ...styles.active } : styles.tabBtn;
+
   // Generate Teaching Notes
   const handleGenerateNotes = async (e) => {
     e.preventDefault();
@@ -213,26 +241,26 @@ const TeacherAITools = () => {
       </div>
 
       {message && (
-        <div className={`${styles.message} ${message.includes('✓') ? styles.success : styles.error}`}>
+        <div style={messageStyle}>
           {message}
         </div>
       )}
 
-      <div className={styles.tabs}>
+      <div style={styles.tabs}>
         <button
-          className={`${styles.tabBtn} ${activeTab === 'notes' ? styles.active : ''}`}
+          style={getTabBtnStyle('notes')}
           onClick={() => setActiveTab('notes')}
         >
           📝 Teaching Notes
         </button>
         <button
-          className={`${styles.tabBtn} ${activeTab === 'schemes' ? styles.active : ''}`}
+          style={getTabBtnStyle('schemes')}
           onClick={() => setActiveTab('schemes')}
         >
           ✅ Marking Schemes
         </button>
         <button
-          className={`${styles.tabBtn} ${activeTab === 'marking' ? styles.active : ''}`}
+          style={getTabBtnStyle('marking')}
           onClick={() => setActiveTab('marking')}
         >
           🔍 Auto-Mark Work
