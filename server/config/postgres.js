@@ -2,7 +2,7 @@ require('dotenv').config();
 const { Pool } = require('pg');
 
 // Prefer discrete DB env vars when explicitly configured.
-// Otherwise parse a single DATABASE_URL (e.g. Supabase).
+// Otherwise parse a single DATABASE_URL.
 const dbHost = process.env.DB_HOST?.trim();
 const dbPort = process.env.DB_PORT?.trim();
 const dbName = process.env.DB_NAME?.trim();
@@ -24,7 +24,7 @@ if (hasExplicitDbEnv) {
     ssl: { rejectUnauthorized: false },
   };
 } else if (connectionString) {
-  // Parse CONNECTION_URL to extract components and avoid IPv6-only hostname issues
+  // Parse DATABASE_URL into explicit connection parameters.
   try {
     const url = new URL(connectionString);
     poolConfig = {
@@ -35,9 +35,6 @@ if (hasExplicitDbEnv) {
       password: url.password,
       ssl: { rejectUnauthorized: false },
     };
-    // Force IPv4 for Supabase on Vercel
-    poolConfig.family = 4;
-    console.log('✓ Parsed DATABASE_URL into explicit connection parameters with family=4');
   } catch (err) {
     console.error('Failed to parse DATABASE_URL:', err.message);
     poolConfig = {

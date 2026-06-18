@@ -272,6 +272,58 @@ CREATE TABLE IF NOT EXISTS messages (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Teaching Notes (AI-generated from syllabus)
+CREATE TABLE IF NOT EXISTS teaching_notes (
+  id VARCHAR(50) PRIMARY KEY,
+  teacher_id VARCHAR(50) REFERENCES teachers(id) ON DELETE CASCADE,
+  subject_id VARCHAR(50) REFERENCES subjects(id),
+  class_id VARCHAR(50) REFERENCES classes(id),
+  title VARCHAR(255) NOT NULL,
+  syllabus_file_name VARCHAR(255),
+  pacing VARCHAR(255),
+  notes_content TEXT,
+  status VARCHAR(20) DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Marking Schemes (AI-generated from test/exercise)
+CREATE TABLE IF NOT EXISTS marking_schemes (
+  id VARCHAR(50) PRIMARY KEY,
+  teacher_id VARCHAR(50) REFERENCES teachers(id) ON DELETE CASCADE,
+  subject_id VARCHAR(50) REFERENCES subjects(id),
+  class_id VARCHAR(50) REFERENCES classes(id),
+  test_title VARCHAR(255) NOT NULL,
+  test_file_name VARCHAR(255),
+  scheme_content TEXT,
+  max_score INT,
+  status VARCHAR(20) DEFAULT 'pending',
+  is_approved BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Auto-marked Student Work
+CREATE TABLE IF NOT EXISTS marked_work (
+  id VARCHAR(50) PRIMARY KEY,
+  teacher_id VARCHAR(50) REFERENCES teachers(id) ON DELETE CASCADE,
+  student_id VARCHAR(50) REFERENCES students(id) ON DELETE CASCADE,
+  subject_id VARCHAR(50) REFERENCES subjects(id),
+  class_id VARCHAR(50) REFERENCES classes(id),
+  marking_scheme_id VARCHAR(50) REFERENCES marking_schemes(id),
+  work_file_name VARCHAR(255),
+  work_type VARCHAR(50),
+  extracted_text TEXT,
+  score INT,
+  total_marks INT,
+  ai_feedback TEXT,
+  teacher_feedback TEXT,
+  status VARCHAR(20) DEFAULT 'pending_review',
+  is_approved BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create indexes for common queries
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_students_class_id ON students(class_id);

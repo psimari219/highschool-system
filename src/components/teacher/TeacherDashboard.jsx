@@ -2,7 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import DashboardShell from '../layout/DashboardShell';
-import { LayoutDashboard, BookOpen, ClipboardList, BookMarked, Award, FileText, Calendar, Users, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, BookOpen, ClipboardList, BookMarked, Award, FileText, Calendar, Users, MessageSquare, Zap } from 'lucide-react';
 import TeacherHome from './TeacherHome';
 import TeacherClasses from './TeacherClasses';
 import TeacherAttendance from './TeacherAttendance';
@@ -14,6 +14,7 @@ import TeacherStudents from './TeacherStudents';
 import TeacherTimetable from './TeacherTimetable';
 import TeacherRequests from './TeacherRequests';
 import TeacherPersonalPlans from './TeacherPersonalPlans';
+import TeacherAITools from './TeacherAITools';
 import MessagesPage from '../messages/MessagesPage';
 
 export default function TeacherDashboard({ store, onUpdate }) {
@@ -48,6 +49,7 @@ export default function TeacherDashboard({ store, onUpdate }) {
         { path: '/teacher/requests',   icon: FileText,      label: 'Requests' },
         { path: '/teacher/messages',   icon: MessageSquare, label: 'Messages' },
         { path: '/teacher/personal-plans', icon: BookOpen,   label: 'Student Plans' },
+        { path: '/teacher/ai-tools',   icon: Zap,           label: '🤖 AI Tools' },
       ]
     }
   ];
@@ -69,6 +71,7 @@ export default function TeacherDashboard({ store, onUpdate }) {
         <Route path="/resources" element={<TeacherResources {...sharedProps} teacherId={teacherId} myClasses={myClasses} />} />
         <Route path="/personal-plans" element={<TeacherPersonalPlans {...sharedProps} />} />
         <Route path="/timetable"  element={<TeacherTimetable store={store} teacherId={teacherId} />} />
+        <Route path="/ai-tools"   element={<TeacherAITools {...sharedProps} />} />
         <Route path="*"           element={<Navigate to="/teacher" replace />} />
       </Routes>
     </DashboardShell>
