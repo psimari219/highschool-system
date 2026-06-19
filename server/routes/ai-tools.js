@@ -3,6 +3,7 @@ const auth = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const { query, uuidv4 } = require('../models/data');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const pdfParse = require('pdf-parse');
@@ -10,8 +11,8 @@ const pdfParse = require('pdf-parse');
 // Initialize Google Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-// Setup file upload
-const uploadsDir = path.join(__dirname, '../uploads');
+// Setup file upload using a writable temp directory for serverless deployment
+const uploadsDir = path.join(os.tmpdir(), 'highschool-ai-uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
@@ -81,6 +82,9 @@ Generate teaching notes in the following format:
 Make the notes practical and ready for classroom use.`;
 
     const response = await model.generateContent(prompt);
+    if (!response || !response.response) {
+      throw new Error('AI response was empty or malformed');
+    }
     const notesContent = response.response.text();
 
     // Save to database
@@ -141,6 +145,9 @@ Generate a marking scheme with:
 Format the output clearly so it can be easily understood by teachers marking student work.`;
 
     const response = await model.generateContent(prompt);
+    if (!response || !response.response) {
+      throw new Error('AI response was empty or malformed');
+    }
     const schemeContent = response.response.text();
 
     // Extract total marks if mentioned
@@ -212,6 +219,9 @@ Provide:
 Format: Start with "TOTAL_SCORE: X" where X is the numeric score. Then provide detailed feedback.`;
 
     const response = await model.generateContent(prompt);
+    if (!response || !response.response) {
+      throw new Error('AI response was empty or malformed');
+    }
     const feedbackContent = response.response.text();
 
     // Extract score
