@@ -57,6 +57,12 @@ app.use('/api/announcements', require('./routes/announcements'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/ai-tools', require('./routes/ai-tools'));
 
+app.use((err, req, res, next) => {
+  console.error('Unhandled server error:', err);
+  if (res.headersSent) return next(err);
+  res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
+});
+
 // Serve client build in production when available (local deployment only)
 if (process.env.NODE_ENV === 'production' && require.main === module) {
   const buildPath = path.join(__dirname, '..', 'build');

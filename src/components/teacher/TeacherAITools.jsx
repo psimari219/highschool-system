@@ -34,6 +34,15 @@ const TeacherAITools = () => {
   });
   const [reviewWork, setReviewWork] = useState(null);
 
+  const parseApiResponse = async (res) => {
+    const text = await res.text();
+    try {
+      return text ? JSON.parse(text) : {};
+    } catch (err) {
+      return { error: text || `HTTP ${res.status}` };
+    }
+  };
+
   // Load data on mount
   useEffect(() => {
     loadTeachingNotes();
@@ -44,7 +53,11 @@ const TeacherAITools = () => {
   const loadTeachingNotes = async () => {
     try {
       const res = await fetch('/api/ai-tools/teaching-notes');
-      const data = await res.json();
+      const data = await parseApiResponse(res);
+      if (!res.ok) {
+        console.error('Error loading notes:', data.error || data);
+        return;
+      }
       setNotes(data);
     } catch (err) {
       console.error('Error loading notes:', err);
@@ -54,7 +67,11 @@ const TeacherAITools = () => {
   const loadMarkingSchemes = async () => {
     try {
       const res = await fetch('/api/ai-tools/marking-schemes');
-      const data = await res.json();
+      const data = await parseApiResponse(res);
+      if (!res.ok) {
+        console.error('Error loading schemes:', data.error || data);
+        return;
+      }
       setSchemes(data);
     } catch (err) {
       console.error('Error loading schemes:', err);
@@ -64,7 +81,11 @@ const TeacherAITools = () => {
   const loadMarkedWork = async () => {
     try {
       const res = await fetch('/api/ai-tools/marked-work');
-      const data = await res.json();
+      const data = await parseApiResponse(res);
+      if (!res.ok) {
+        console.error('Error loading marked work:', data.error || data);
+        return;
+      }
       setMarkedWork(data);
     } catch (err) {
       console.error('Error loading marked work:', err);
@@ -119,7 +140,7 @@ const TeacherAITools = () => {
         method: 'POST',
         body: formData,
       });
-      const data = await res.json();
+      const data = await parseApiResponse(res);
       if (res.ok) {
         setMessage('✓ Teaching notes generated successfully!');
         setSyllabusFile(null);
@@ -155,7 +176,7 @@ const TeacherAITools = () => {
         method: 'POST',
         body: formData,
       });
-      const data = await res.json();
+      const data = await parseApiResponse(res);
       if (res.ok) {
         setMessage('✓ Marking scheme generated successfully!');
         setTestFile(null);
@@ -196,7 +217,7 @@ const TeacherAITools = () => {
         method: 'POST',
         body: formData,
       });
-      const data = await res.json();
+      const data = await parseApiResponse(res);
       if (res.ok) {
         setMessage(`✓ Work marked! Score: ${data.score}/${data.totalMarks}`);
         setStudentWorkFile(null);

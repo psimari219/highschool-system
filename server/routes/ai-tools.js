@@ -16,6 +16,11 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+const safeUnlink = (filePath) => {
+  if (!filePath) return;
+  fs.unlink(filePath, () => {});
+};
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
@@ -87,12 +92,12 @@ Make the notes practical and ready for classroom use.`;
     );
 
     // Clean up uploaded file
-    fs.unlinkSync(req.file.path);
+    safeUnlink(req.file?.path);
 
     res.json({ id, message: 'Teaching notes generated successfully', notes: notesContent });
   } catch (error) {
     // Clean up on error
-    if (req.file) fs.unlinkSync(req.file.path).catch(() => {});
+    safeUnlink(req.file?.path);
     res.status(500).json({ error: error.message });
   }
 });
@@ -151,11 +156,11 @@ Format the output clearly so it can be easily understood by teachers marking stu
     );
 
     // Clean up uploaded file
-    fs.unlinkSync(req.file.path);
+    safeUnlink(req.file?.path);
 
     res.json({ id, message: 'Marking scheme generated successfully', scheme: schemeContent, maxScore });
   } catch (error) {
-    if (req.file) fs.unlinkSync(req.file.path).catch(() => {});
+    safeUnlink(req.file?.path);
     res.status(500).json({ error: error.message });
   }
 });
@@ -222,7 +227,7 @@ Format: Start with "TOTAL_SCORE: X" where X is the numeric score. Then provide d
     );
 
     // Clean up uploaded file
-    fs.unlinkSync(req.file.path);
+    safeUnlink(req.file?.path);
 
     res.json({ 
       id, 
