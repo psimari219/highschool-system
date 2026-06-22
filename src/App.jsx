@@ -95,6 +95,32 @@ export default function App() {
     saveStore(newStore);
   }
 
+  useEffect(() => {
+    let cancelled = false;
+    async function loadRemoteTimetables() {
+      try {
+        const res = await fetch('/api/timetables');
+        if (!res.ok) return;
+        const json = await res.json();
+        if (cancelled || !json) return;
+        setStore(prevStore => {
+          const updatedStore = {
+            ...prevStore,
+            timetables: json.timetables || prevStore.timetables,
+            examTimetables: json.examTimetables || prevStore.examTimetables,
+          };
+          try { saveStore(updatedStore); } catch (err) { console.debug('Failed to persist remote timetables locally:', err); }
+          return updatedStore;
+        });
+      } catch (e) {
+        console.debug('Unable to load timetables from backend:', e);
+      }
+    }
+
+    loadRemoteTimetables();
+    return () => { cancelled = true; };
+  }, []);
+
   return (
     <HashRouter>
       <ThemeProvider>
