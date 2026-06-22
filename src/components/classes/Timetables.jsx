@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Calendar, Save } from 'lucide-react';
 import Topbar from '../layout/Topbar';
 
@@ -77,13 +77,71 @@ export default function Timetables({ store, onUpdate }) {
   }
 
   function saveCell(day, period, data) {
-    const existing = timetable[day] || [];
-    const updated = existing.filter(p => p.period !== period);
-    if (data.subject) updated.push({ period, time: periods.find(p => p.period === period)?.time || '', ...data });
-    const newTimetable = { ...store.timetables, [classId]: { ...timetable, [day]: updated } };
-    onUpdate({ ...store, timetables: newTimetable });
-    setEditing(null);
+    const token = localStorage.getItem('token');
+    // Try to persist to backend; if it fails, fall back to local-only update
+    (async () => {
+      try {
+        if (classId) {
+          const body = { day, period, subject: data.subject || null, teacherId: data.teacherId || null, room: data.room || null, time: data.time || null };
+          const headers = { 'Content-Type': 'application/json' };
+          if (token) headers.Authorization = `Bearer ${token}`;
+          const res = await fetch(`/api/timetables/class/${classId}/cell`, { method: 'PUT', headers, body: JSON.stringify(body) });
+          if (res.ok) {
+            const json = await res.json();
+            // json.timetable is an array of rows for the class
+            const grouped = {};
+            (json.timetable || []).forEach(r => {
+              grouped[r.day] = grouped[r.day] || [];
+              grouped[r.day].push({ period: r.period, time: r.startTime || r.time || (periods.find(p => p.period === r.period)?.time || ''), subject: r.subject || null, teacherId: r.teacherId || null, room: r.room || '' });
+            });
+            const newTimetable = { ...store.timetables, [classId]: grouped };
+            onUpdate({ ...store, timetables: newTimetable });
+            setEditing(null);
+            return;
+          }
+        }
+      } catch (e) {
+        // ignore and fallback to local
+      }
+
+      // Fallback local update when API not reachable or not authorized
+      const existing = timetable[day] || [];
+      const updated = existing.filter(p => p.period !== period);
+      if (data.subject) updated.push({ period, time: periods.find(p => p.period === period)?.time || '', ...data });
+      const newTimetable = { ...store.timetables, [classId]: { ...timetable, [day]: updated } };
+      onUpdate({ ...store, timetables: newTimetable });
+      setEditing(null);
+    })();
   }
+
+  // When classId changes, try to load server-side timetable for that class
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      if (!classId) return;
+      const token = localStorage.getItem('token');
+      try {
+        const headers = {};
+        if (token) headers.Authorization = `Bearer ${token}`;
+        const res = await fetch(`/api/timetables/class/${classId}`, { headers });
+        if (!res.ok) return; // keep existing local store
+        const json = await res.json();
+        // json.timetable is array
+        const grouped = {};
+        (json.timetable || []).forEach(r => {
+          grouped[r.day] = grouped[r.day] || [];
+          grouped[r.day].push({ period: r.period, time: r.startTime || (periods.find(p => p.period === r.period)?.time || ''), subject: r.subject || null, teacherId: r.teacherId || null, room: r.room || '' });
+        });
+        if (!cancelled) {
+          onUpdate({ ...store, timetables: { ...store.timetables, [classId]: grouped } });
+        }
+      } catch (e) {
+        // ignore, keep local store
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [classId]);
 
   const editCell = editing ? getCell(editing.day, editing.period) : null;
 
