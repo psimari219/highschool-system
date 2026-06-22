@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Calendar, Save } from 'lucide-react';
 import Topbar from '../layout/Topbar';
 
@@ -76,7 +76,27 @@ export default function Timetables({ store, onUpdate }) {
     return timetable[day]?.find(p => p.period === period) || null;
   }
 
-  function saveCell(day, period, data) {
+  async function saveCell(day, period, data) {
+    const body = { day, period, subject: data.subject || null, teacherId: data.teacherId || null, room: data.room || null, time: data.time || null };
+    const headers = { 'Content-Type': 'application/json' };
+    try {
+      const res = await fetch(`/api/timetables/class/${classId}/cell`, { method: 'PUT', headers, body: JSON.stringify(body) });
+      if (res.ok) {
+        const json = await res.json();
+        const grouped = {};
+        (json.timetable || []).forEach(r => {
+          grouped[r.day] = grouped[r.day] || [];
+          grouped[r.day].push({ period: r.period, time: r.startTime || (periods.find(p => p.period === r.period)?.time || ''), subject: r.subject || null, teacherId: r.teacherId || null, room: r.room || '' });
+        });
+        const newTimetable = { ...store.timetables, [classId]: grouped };
+        onUpdate({ ...store, timetables: newTimetable });
+        setEditing(null);
+        return;
+      }
+    } catch (e) {
+      console.debug('Timetable save failed:', e);
+    }
+
     const existing = timetable[day] || [];
     const updated = existing.filter(p => p.period !== period);
     if (data.subject) updated.push({ period, time: periods.find(p => p.period === period)?.time || '', ...data });
@@ -84,6 +104,31 @@ export default function Timetables({ store, onUpdate }) {
     onUpdate({ ...store, timetables: newTimetable });
     setEditing(null);
   }
+
+  // When classId changes, try to load server-side timetable for that class
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      if (!classId) return;
+      try {
+        const res = await fetch(`/api/timetables/class/${classId}`);
+        if (!res.ok) return;
+        const json = await res.json();
+        const grouped = {};
+        (json.timetable || []).forEach(r => {
+          grouped[r.day] = grouped[r.day] || [];
+          grouped[r.day].push({ period: r.period, time: r.startTime || (periods.find(p => p.period === r.period)?.time || ''), subject: r.subject || null, teacherId: r.teacherId || null, room: r.room || '' });
+        });
+        if (!cancelled) {
+          onUpdate({ ...store, timetables: { ...store.timetables, [classId]: grouped } });
+        }
+      } catch (e) {
+        console.debug('Timetable load failed:', e);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [classId]);
 
   const editCell = editing ? getCell(editing.day, editing.period) : null;
 

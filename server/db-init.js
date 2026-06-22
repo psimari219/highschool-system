@@ -1,5 +1,5 @@
 require('dotenv').config();
-const pool = require('./config/postgres');
+const { pool } = require('./config/postgres');
 
 const schema = `
 -- Users table (all logins)
@@ -118,6 +118,20 @@ CREATE TABLE IF NOT EXISTS timetable (
   start_time VARCHAR(10),
   end_time VARCHAR(10),
   room VARCHAR(50),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Exam Timetable
+CREATE TABLE IF NOT EXISTS exam_timetables (
+  id VARCHAR(50) PRIMARY KEY,
+  class_id VARCHAR(50) REFERENCES classes(id),
+  date DATE NOT NULL,
+  start_time VARCHAR(10) NOT NULL,
+  end_time VARCHAR(10) NOT NULL,
+  subject VARCHAR(255) NOT NULL,
+  venue VARCHAR(255),
+  invigilator_id VARCHAR(50) REFERENCES teachers(id),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
