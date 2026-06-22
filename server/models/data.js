@@ -1,4 +1,4 @@
-const pool = require('../config/postgres');
+const { pool } = require('../config/postgres');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 

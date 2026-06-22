@@ -1,6 +1,6 @@
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
-const pool = require('./config/postgres');
+const { pool } = require('./config/postgres');
 const { v4: uuidv4 } = require('uuid');
 
 async function seedDatabase() {
@@ -93,10 +93,14 @@ async function seedDatabase() {
 
     // Seed classes
     const classes = [
-      { id: 'c1', name: 'Form 1A', grade: 'Form 1', stream: 'A', year: 2024, capacity: 35, teacherId: 'T001' },
-      { id: 'c2', name: 'Form 1B', grade: 'Form 1', stream: 'B', year: 2024, capacity: 35, teacherId: 'T002' },
-      { id: 'c3', name: 'Form 2A', grade: 'Form 2', stream: 'A', year: 2024, capacity: 35, teacherId: 'T003' },
-      { id: 'c4', name: 'Form 3A', grade: 'Form 3', stream: 'A', year: 2024, capacity: 35, teacherId: 'T004' },
+      { id: 'C001', name: 'Grade 9A', grade: '9', stream: 'A', year: 2024, capacity: 35, teacherId: 'T002' },
+      { id: 'C002', name: 'Grade 9B', grade: '9', stream: 'B', year: 2024, capacity: 35, teacherId: 'T003' },
+      { id: 'C003', name: 'Grade 10A', grade: '10', stream: 'A', year: 2024, capacity: 35, teacherId: 'T001' },
+      { id: 'C004', name: 'Grade 10B', grade: '10', stream: 'B', year: 2024, capacity: 35, teacherId: 'T004' },
+      { id: 'C005', name: 'Grade 11A', grade: '11', stream: 'A', year: 2024, capacity: 32, teacherId: 'T005' },
+      { id: 'C006', name: 'Grade 11B', grade: '11', stream: 'B', year: 2024, capacity: 32, teacherId: 'T006' },
+      { id: 'C007', name: 'Grade 12A', grade: '12', stream: 'A', year: 2024, capacity: 30, teacherId: 'T001' },
+      { id: 'C008', name: 'Grade 12B', grade: '12', stream: 'B', year: 2024, capacity: 30, teacherId: 'T002' },
     ];
 
     for (const cls of classes) {
@@ -111,10 +115,10 @@ async function seedDatabase() {
     await client.query(`
       INSERT INTO timetable (id, class_id, subject_id, teacher_id, day, period, start_time, end_time, room, created_at, updated_at)
       VALUES
-        ('tt1', 'c1', 's1', 'T001', 'Monday', 1, '07:00', '07:45', 'Room 101', NOW(), NOW()),
-        ('tt2', 'c1', 's2', 'T002', 'Monday', 2, '07:45', '08:30', 'Room 101', NOW(), NOW()),
-        ('tt3', 'c2', 's3', 'T003', 'Monday', 1, '07:00', '07:45', 'Room 102', NOW(), NOW()),
-        ('tt4', 'c2', 's4', 'T004', 'Monday', 2, '07:45', '08:30', 'Room 102', NOW(), NOW())
+        ('tt1', 'C001', 's1', 'T001', 'Monday', 1, '07:00', '07:45', 'Room 101', NOW(), NOW()),
+        ('tt2', 'C001', 's2', 'T002', 'Monday', 2, '07:45', '08:30', 'Room 101', NOW(), NOW()),
+        ('tt3', 'C002', 's3', 'T003', 'Monday', 1, '07:00', '07:45', 'Room 102', NOW(), NOW()),
+        ('tt4', 'C002', 's4', 'T004', 'Monday', 2, '07:45', '08:30', 'Room 102', NOW(), NOW())
       ON CONFLICT (id) DO NOTHING
     `);
 
