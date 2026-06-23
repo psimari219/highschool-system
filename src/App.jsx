@@ -99,7 +99,7 @@ export default function App() {
     let cancelled = false;
     async function loadRemoteTimetables() {
       try {
-        const res = await fetch('/api/timetables');
+        const res = await fetch('/api/timetables', { cache: 'no-store' });
         if (!res.ok) return;
         const json = await res.json();
         if (cancelled || !json) return;

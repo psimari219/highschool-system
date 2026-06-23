@@ -80,7 +80,7 @@ export default function Timetables({ store, onUpdate }) {
     const body = { day, period, subject: data.subject || null, teacherId: data.teacherId || null, room: data.room || null, time: data.time || null };
     const headers = { 'Content-Type': 'application/json' };
     try {
-      const res = await fetch(`/api/timetables/class/${classId}/cell`, { method: 'PUT', headers, body: JSON.stringify(body) });
+      const res = await fetch(`/api/timetables/class/${classId}/cell`, { method: 'PUT', headers, body: JSON.stringify(body), cache: 'no-store' });
       if (res.ok) {
         const json = await res.json();
         const grouped = {};
@@ -111,7 +111,7 @@ export default function Timetables({ store, onUpdate }) {
     async function load() {
       if (!classId) return;
       try {
-        const res = await fetch(`/api/timetables/class/${classId}`);
+        const res = await fetch(`/api/timetables/class/${classId}`, { cache: 'no-store' });
         if (!res.ok) return;
         const json = await res.json();
         const grouped = {};

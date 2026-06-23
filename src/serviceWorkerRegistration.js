@@ -18,6 +18,16 @@ export function register() {
   }
 }
 
+export function unregister() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations()
+      .then(registrations => {
+        registrations.forEach(registration => registration.unregister());
+      })
+      .catch(() => {});
+  }
+}
+
 export function skipWaiting() {
   if (navigator.serviceWorker.controller) {
     navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
