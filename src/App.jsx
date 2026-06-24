@@ -78,10 +78,8 @@ function AppRoutes({ store, onUpdate }) {
 export default function App() {
   const [store, setStore] = useState(() => getStore());
 
-  function handleUpdate(newStore) {
-    setStore(newStore);
+  function persistStore(newStore) {
     try {
-      // If the store indicates a tenant-specific key, persist it to that key only
       if (newStore && newStore.__tenantKey) {
         const key = newStore.__tenantKey;
         const copy = { ...newStore };
@@ -93,6 +91,11 @@ export default function App() {
       // ignore and fall back to normal save
     }
     saveStore(newStore);
+  }
+
+  function handleUpdate(newStore) {
+    setStore(newStore);
+    persistStore(newStore);
   }
 
   useEffect(() => {
@@ -109,7 +112,7 @@ export default function App() {
             timetables: json.timetables || prevStore.timetables,
             examTimetables: json.examTimetables || prevStore.examTimetables,
           };
-          try { saveStore(updatedStore); } catch (err) { console.debug('Failed to persist remote timetables locally:', err); }
+          try { persistStore(updatedStore); } catch (err) { console.debug('Failed to persist remote timetables locally:', err); }
           return updatedStore;
         });
       } catch (e) {
