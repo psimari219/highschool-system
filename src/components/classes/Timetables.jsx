@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Calendar, Save } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
 import Topbar from '../layout/Topbar';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -119,8 +120,22 @@ export default function Timetables({ store, onUpdate }) {
           grouped[r.day] = grouped[r.day] || [];
           grouped[r.day].push({ period: r.period, time: r.startTime || (periods.find(p => p.period === r.period)?.time || ''), subject: r.subject || null, teacherId: r.teacherId || null, room: r.room || '' });
         });
+        const examList = (json.examTimetable || []).map(e => ({
+          id: e.id,
+          date: e.date || '',
+          start: e.start || '',
+          end: e.end || '',
+          subject: e.subject || '',
+          venue: e.venue || '',
+          invigilator: e.invigilator || '',
+          invigilatorName: e.invigilatorName || '',
+        }));
         if (!cancelled) {
-          onUpdate({ ...store, timetables: { ...store.timetables, [classId]: grouped } });
+          onUpdate({
+            ...store,
+            timetables: { ...store.timetables, [classId]: grouped },
+            examTimetables: { ...store.examTimetables, [classId]: examList },
+          });
         }
       } catch (e) {
         console.debug('Timetable load failed:', e);
@@ -285,16 +300,53 @@ function ExamEditor({ cls, store, onUpdate }) {
   const exams = store.examTimetables?.[classId] || [];
   const [form, setForm] = React.useState({ date: '', start: '', end: '', subject: '', venue: '', invigilator: '' });
 
-  function addExam(e) {
+  async function addExam(e) {
     e.preventDefault();
     if (!form.date || !form.start || !form.end || !form.subject) { alert('Please fill date, time and subject'); return; }
-    const updated = [...exams, { ...form }];
+    const body = {
+      date: form.date,
+      start: form.start,
+      end: form.end,
+      subject: form.subject,
+      venue: form.venue || null,
+      invigilator: form.invigilator || null,
+    };
+    try {
+      const res = await fetch(`/api/timetables/class/${classId}/exams`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        onUpdate({ ...store, examTimetables: { ...store.examTimetables, [classId]: json.examTimetable || [] } });
+        setForm({ date: '', start: '', end: '', subject: '', venue: '', invigilator: '' });
+        return;
+      }
+    } catch (err) {
+      console.debug('Exam save failed:', err);
+    }
+
+    const updated = [...exams, { id: uuidv4(), ...form }];
     onUpdate({ ...store, examTimetables: { ...store.examTimetables, [classId]: updated } });
     setForm({ date: '', start: '', end: '', subject: '', venue: '', invigilator: '' });
   }
 
-  function removeExam(idx) {
-    const updated = exams.filter((_,i)=>i!==idx);
+  async function removeExam(idx) {
+    const exam = exams[idx];
+    if (exam?.id) {
+      try {
+        const res = await fetch(`/api/timetables/class/${classId}/exams/${exam.id}`, { method: 'DELETE' });
+        if (res.ok) {
+          const json = await res.json();
+          onUpdate({ ...store, examTimetables: { ...store.examTimetables, [classId]: json.examTimetable || [] } });
+          return;
+        }
+      } catch (err) {
+        console.debug('Exam delete failed:', err);
+      }
+    }
+    const updated = exams.filter((_, i) => i !== idx);
     onUpdate({ ...store, examTimetables: { ...store.examTimetables, [classId]: updated } });
   }
 
