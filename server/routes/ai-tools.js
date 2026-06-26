@@ -6,7 +6,15 @@ const fs = require('fs');
 const os = require('os');
 const { query, uuidv4 } = require('../models/data');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const pdfParse = require('pdf-parse');
+
+const loadPdfParse = () => {
+  try {
+    return require('pdf-parse');
+  } catch (err) {
+    console.error('pdf-parse is unavailable. AI PDF processing routes will not work.', err.message);
+    return null;
+  }
+};
 
 // Initialize Google Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -55,11 +63,14 @@ router.post('/teaching-notes', auth, upload.single('syllabus'), async (req, res)
     // Extract text from file
     let fileContent = '';
     if (req.file.mimetype === 'application/pdf') {
+      const pdfParse = loadPdfParse();
+      if (!pdfParse) {
+        return res.status(500).json({ error: 'PDF processing is not available on this deployment.' });
+      }
       const pdfBuffer = fs.readFileSync(req.file.path);
       const pdfData = await pdfParse(pdfBuffer);
       fileContent = pdfData.text;
     } else {
-      // For Word docs, we'd need additional parser; for now, return error
       return res.status(400).json({ error: 'Word document parsing not yet supported. Please use PDF.' });
     }
 
@@ -121,6 +132,10 @@ router.post('/marking-scheme', auth, upload.single('test'), async (req, res) => 
     // Extract text from file
     let fileContent = '';
     if (req.file.mimetype === 'application/pdf') {
+      const pdfParse = loadPdfParse();
+      if (!pdfParse) {
+        return res.status(500).json({ error: 'PDF processing is not available on this deployment.' });
+      }
       const pdfBuffer = fs.readFileSync(req.file.path);
       const pdfData = await pdfParse(pdfBuffer);
       fileContent = pdfData.text;
@@ -192,6 +207,10 @@ router.post('/auto-mark', auth, upload.single('studentWork'), async (req, res) =
     // Extract text from student work
     let workContent = '';
     if (req.file.mimetype === 'application/pdf') {
+      const pdfParse = loadPdfParse();
+      if (!pdfParse) {
+        return res.status(500).json({ error: 'PDF processing is not available on this deployment.' });
+      }
       const pdfBuffer = fs.readFileSync(req.file.path);
       const pdfData = await pdfParse(pdfBuffer);
       workContent = pdfData.text;

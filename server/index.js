@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.json());
 
 // PostgreSQL connection
-const { pool, getDebugInfo } = require('./config/postgres');
+const { getPool, getDebugInfo } = require('./config/postgres');
 
 // Initialize database schema on startup (Vercel: do this asynchronously, don't block)
 const initializeDatabase = require('./db-init');
@@ -30,6 +30,7 @@ app.get('/api/health', (req, res) => res.json({ status: 'OK', timestamp: new Dat
 app.get('/api/db-status', async (req, res) => {
   const info = getDebugInfo();
   try {
+    const pool = await getPool();
     const result = await pool.query('SELECT NOW()');
     res.json({ status: 'connected', timestamp: result.rows[0].now, host: info.host });
   } catch (error) {

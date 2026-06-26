@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { pool } = require('./config/postgres');
+const { poolPromise } = require('./config/postgres');
 
 const schema = `
 -- Users table (all logins)
@@ -356,6 +356,7 @@ async function initializeDatabase() {
     // Split the schema into individual statements and execute them
     const statements = schema.split(';').filter(stmt => stmt.trim());
     
+    const pool = await poolPromise;
     for (const statement of statements) {
       if (statement.trim()) {
         await pool.query(statement);
